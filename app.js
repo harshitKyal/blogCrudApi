@@ -113,6 +113,12 @@ app.post('/blog/create', function(req, res) {
     // save blog
     newBlog.save(function(err, result) {
         if (err) {
+
+            if(err.errors.hasOwnProperty('title')){
+                if (err.errors.title.kind = "unique")
+                    console.log("Enter unique title " + err.errors.title.kind);
+            }
+
             res.send(err);
         } else {
             res.send(newBlog);
@@ -153,7 +159,7 @@ app.put('/blog/edit/:Id', function(req, res) {
 
         if (err) {
             res.send(err);
-            conssole.log(err);
+            console.log(err);
         } else {
             console.log(result);
             res.send(result);
@@ -167,21 +173,20 @@ app.put('/blog/edit/:Id', function(req, res) {
 // POST request to Delete a blog
 app.post('/blog/delete/:Id', function(req, res) {
 
+        blogModel.remove({
+            _id: req.params.Id
+        }, function(err, result) {
 
-    blogModel.remove({
-        _id: req.params.Id
-    }, function(err, result) {
+            if (err) {
+                res.send(err);
+            } else {
+                //res.send(res)
+                res.json({
+                    Info: "aah! Blog Deleted Successfully! "
+                });
+            }
 
-        if (err) {
-            res.send(err);
-        } else {
-            res.send(result)
-            res.json({
-                Info: "Blog Deleted! "
-            });
-        }
-
-    }); //  remove blog ends
+        }); //  remove blog ends
 
 }); //POST request  ends
 
@@ -226,13 +231,20 @@ app.get('*', function(request, response, next) {
     next("Error Occured");
 });
 
+//function for any other path i.e Error handler
+app.put('*', function(request, response, next) {
+
+    response.status = 404;
+    next("Error Occured");
+});
+
 
 //Error handling Middleware
 
 app.use(function(err, req, res, next) {
     
     console.log("Error handler used");
-    console.error(err.stack);
+    //console.error(err.stack);
     
     if (res.status == 404) {
         res.send("Enter Correct Path");

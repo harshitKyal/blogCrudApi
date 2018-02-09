@@ -2,7 +2,7 @@
 // including mongoose
 var mongoose = require('mongoose');
 //declaring the module 'mongoose-unique-validator'(plugin).
-//var uniqueValidator = require('mongoose-unique-validator');
+var uniqueValidator = require('mongoose-unique-validator');
 
 // declaring a schema (or) database structure
 
@@ -12,12 +12,13 @@ var Schema = mongoose.Schema;
 
 var blogSchema = new Schema({
 
-    blogId:{type:String,default:''},
+    //blogId:{type:String,default:''},
 
     title: {
         type: String,
         default: '',
-        required: true
+        required: true,
+        unique:true
     },
     
     subtitle: {
@@ -30,18 +31,13 @@ var blogSchema = new Schema({
         default: '',
         required: true
     },
-    
-    imageUrl : {
-        type:String
-    },
     comments: [],
     created : {type:Date},
     //lastModified : {type:Date},
-    author: {}
-    //tags: []
+    author: {},
+    tags: []
 }); //for createdAt and updatedAt
 
 // connect model and schema
 mongoose.model('Blog', blogSchema);
-
-//blogSchema.plugin(uniqueValidator);
+blogSchema.plugin(uniqueValidator);
