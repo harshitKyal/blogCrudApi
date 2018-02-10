@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 //  mongoose module
 var mongoose = require('mongoose');
 
-var middlewares = require('./myMiddlewares.js');
+//var middlewares = require('./myMiddlewares.js');
 
 var bodyParser = require('body-parser');
 
