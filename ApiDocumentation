@@ -1,0 +1,27 @@
+Urls of my api - 
+
+base url - http://localhost:3000/
+
+Resources - 
+
+1) GET /blogs 		- this is used to get all blogs - array of objects
+
+2) GET /blog/:Id 	- this is used to get the info of a particular blog. ID is the variable - 						
+					  output : object of particular Id
+
+3) POST /blog/create	- create a blog ,
+						Input required - title, subTitle, blogBody, author ,tags : title should be unique
+						output - object of created blog
+
+
+4) PUT /blog/edit/:id - edit a blog, 
+						Input required - title, subTitle, blogBody, author ,tags : title should be unique
+						output - object of updated blog
+
+
+5) POST /blog/delete/:id - remove a blog 
+							output - msg: blog deleted
+
+6) POST /blog/comment/:id - comment on blog 
+							Input required - commentorName ,commentBody ,timendate
+							output - object of commented blog

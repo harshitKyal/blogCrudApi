@@ -28,8 +28,7 @@ var blogSchema = new Schema({
     
     blogBody: {
         type: String,
-        default: '',
-        required: true
+        default: ''
     },
     comments: [],
     created : {type:Date},

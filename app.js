@@ -18,66 +18,45 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-//database
-
-var databasePath = "mongodb://localhost/myblogApp";
+//database path
+var databasePath = "mongodb://localhost/blogApp";
 
 db = mongoose.connect(databasePath);
-
+//to make connection
 mongoose.connection.once('open', function() {
-    console.log("Success! Database is now connected!");
+    console.log("Database connected Successfully!");
 });
 
-// model file
+// model file 
 var sampleBlog = require('./blogModel.js');
-
+//var fs = require('fs');
+//instance of model file
 var blogModel = mongoose.model('Blog');
 
 // Application Middleware to log user data
 app.use(function(req, res, next) {
-console.log('///////////////////////*//////////////////////////////////');
-    console.log("HostName",req.hostname);//name of the host
-    var x = new Date();
-    console.log("Date and time Log:",x.toString());//date and time 
-    console.log("Protocol Log:",req.protocol);
-    console.log("Path Log:",req.path);
-    console.log("Method Log:",req.method);
-    console.log("Ip address Log:",req.ip);
-    console.log('///////////////////////*//////////////////////////////////');
 
-    console.log("Logging started");
-    console.log("User requested " + req.originalUrl);
+    console.log("HostName", req.hostname); //name of the host
+    var ddate = new Date();
+    console.log("Date:", ddate.toString()); //date and time 
+    console.log("Protocol:", req.protocol);
+    console.log("Path:", req.path);
+    console.log("Method :", req.method);
+    console.log("Url requested " + req.originalUrl);
     console.log("User's IP adress: " + req.ip);
-    console.log("Logging ended");
-    req.someGuy ={
-        name:"SomeGuy",
-        email:"somemail"
-    };
-    next(); 
+
+    next();
 });
 
-app.get('/normal/route', function(request, response) {
-    var dateOfBirth = new Date(request.query.dob);
-    console.log(request.someGuy.name);
-    response.send("Hi, Welcome to My Blog Application! Use '/blog/create' to create a blog, '/blog/_Id' to find a blog, '/blogs' to see all blogs, '/blog/edit/_Id' to edit a blog, '/blog/delete/_Id' to delete a blog. Thank You!  ");
-
-});
-
-app.get('/restricted/route', middlewares.ageFilter,function(request, response) {
-    var dateOfBirth = new Date(request.query.dob);
-
-    response.send("I am"+ request.age + " years old and I can use this route");
-
-});
-
+//documentation 
 app.get('/', function(request, response) {
 
-    response.send("Hi, Welcome to My Blog Application! Use '/blog/create' to create a blog, '/blog/_Id' to find a blog, '/blogs' to see all blogs, '/blog/edit/_Id' to edit a blog, '/blog/delete/_Id' to delete a blog. Thank You!  ");
+    //response.send("Hello , Welcome to  Blog Application! Hit  Documentation for API info ! ");
+    response.send("Hi, Welcome to Blog Application ! \n ***Documentation*** \n base url - http://localhost:3000/ \n Use \n 1) 'GET /blogs' to get all blogs, \n 2) 'GET /blog/:Id' to find particular blog, \n 3) 'POST /blog/create' to create a blog , \n 4) 'PUT /blog/edit/:Id' to edit a blog, \n 5) 'POST /blog/delete/:Id' to delete a blog, \n 6) 'POST /blog/comment/:Id to comment on blog' \n  Thank You!");
 
 });
 
 // GET request for all blogs
-
 app.get('/blogs', function(req, res) {
 
     blogModel.find(function(err, result) {
@@ -88,12 +67,38 @@ app.get('/blogs', function(req, res) {
             res.send(result);
         }
     });
-});
+}); //end get request for all the blogs
+
+//GET request to find a particular blog by ID
+
+app.get('/blog/:Id', function(req, res) {
+
+    blogModel.findOne({
+        '_id': req.params.Id
+    }, function(err, result) {
+        if (err) {
+            console.log(err);
+            res.send("Please check Id");
+        } else {
+
+            //checks if result variable is null
+            if (!result) {
+                res.send("Invalid ID");
+                console.log("Id Not avaialble in database");
+            } else
+                res.send(result);
+        }
+    });
+
+}); //end to find particular blog by id
+
 
 
 //POST request to create a blog
+
 app.post('/blog/create', function(req, res) {
 
+    //to save info to schema
     var newBlog = new blogModel({
 
         title: req.body.title,
@@ -103,47 +108,31 @@ app.post('/blog/create', function(req, res) {
     var today = Date.now();
     newBlog.created = today;
 
+    //to save author info
     newBlog.authorInfo = {
         authorName: req.body.name,
         authorEmail: req.body.email
     };
 
+    //to split by , of all the tags
     newBlog.tags = (req.body.tags != undefined && req.body.tags != null) ? req.body.tags.split(',') : '';
 
     // save blog
     newBlog.save(function(err, result) {
-        if (err) {
 
-            if(err.errors.hasOwnProperty('title')){
+        if (err) {
+            //to check if error is due to unique title 
+            if (err.errors.hasOwnProperty('title')) {
                 if (err.errors.title.kind = "unique")
-                    console.log("Enter unique title " + err.errors.title.kind);
+                    console.log(err);
             }
-
-            res.send(err);
-        } else {
+            res.send("Enter unique title ");
+        } else
             res.send(newBlog);
-        }
-    });
+    }); //end save blog
 
-});
+}); //end post request to create blog
 
-
-//GET request to find a particular blog
-
-app.get('/blog/:Id', function(req, res) {
-
-    blogModel.findOne({
-        '_id': req.params.Id
-    }, function(err, result) {
-        if (err) {
-            console.log("Error");
-            res.send(err);
-        } else {
-            res.send(result);
-        }
-    });
-
-});
 
 
 //PUT request to Edit a blog
@@ -152,17 +141,29 @@ app.put('/blog/edit/:Id', function(req, res) {
     var update = req.body;
 
     //Find one blog and update it.
-
     blogModel.findOneAndUpdate({
         "_id": req.params.Id
-        }, update, function(err, result) {
+    }, update, function(err, result) {
 
         if (err) {
-            res.send(err);
-            console.log(err);
+            //checks type of error
+            if (err.hasOwnProperty('path')) {
+                console.log(err);
+                res.send("Invalid Id");
+            } else if (err.hasOwnProperty('codeName')) {
+                console.log(err);
+                res.send("Title Should be Unique");
+            } else {
+                console.log(err);
+                res.send(err);
+            }
         } else {
-            console.log(result);
-            res.send(result);
+            //checks if result variable is null
+            if (!result) {
+                res.send("Invalid ID");
+                console.log("Id Not avaialble in database");
+            } else
+                res.send(result);
         }
 
     }); // findOneAndUpdate ends
@@ -173,88 +174,102 @@ app.put('/blog/edit/:Id', function(req, res) {
 // POST request to Delete a blog
 app.post('/blog/delete/:Id', function(req, res) {
 
-        blogModel.remove({
-            _id: req.params.Id
-        }, function(err, result) {
+    blogModel.remove({
+        _id: req.params.Id
+    }, function(err, result) {
+        if (err) {
+            console.log("error in delete function")
+            res.send(err);
+        } else {
 
-            if (err) {
-                res.send(err);
-            } else {
-                //res.send(res)
-                res.json({
-                    Info: "aah! Blog Deleted Successfully! "
-                });
-            }
-
-        }); //  remove blog ends
+            res.json({
+                Info: "aah! Blog Deleted Successfully! "
+            });
+            console.log("delete success");
+            console.log(result);
+        }
+    }); //  remove blog ends
 
 }); //POST request  ends
 
 
 //route for commenting on a blog.
-app.post('/blog/:id/comment',function(req, res, next) {
+app.post('/blog/comment/:id', function(req, res, next) {
 
-        blogModel.findOne({'_id':req.params.id},function(err , result){
+    blogModel.findOne({
+        '_id': req.params.id
+    }, function(err, result) {
 
-            if(err)
-            {
-                console.log("sorry ID not available.");
-                next(err);
-            }
-            else
-            { 
-                var y = new Date();
-                timendate = y.toString();
-                result.comments.push({ 
-                    
-                    Name     : req.body.commentorName,
-                    comment  :req.body.commentBody,
-                    commentedTime: timendate           
+        if (err) {
+            console.log(err);
+            res.send("Check Your ID");
+        } else {
+
+            //if result is not null 
+            if (result) {
+                var ddate = new Date();
+                timendate = ddate.toString();
+
+                result.comments.push({
+                    Name: req.body.commentorName,
+                    comment: req.body.commentBody,
+                    commentTime: timendate
                 });
-            
+
                 //save comment
-                result.save(function(err){
-                    if(err)
-                        res.send(error);
-                     else
+                result.save(function(err) {
+                    if (err) {
+                        console.log("Save comment erorr");
+                        res.send(err);
+                    } else
                         res.send(result);
                 });
+            } else {
+                res.send("check Your ID");
+                console.log("Id not avaialble in database");
             }
+        }
 
-        })
+    })
 });
 
-//function for any other path i.e Error handler
+//function for any other path for get request i.e Error handler
 app.get('*', function(request, response, next) {
 
     response.status = 404;
     next("Error Occured");
 });
 
-//function for any other path i.e Error handler
+//function for any other path for put request i.e Error handler
 app.put('*', function(request, response, next) {
 
     response.status = 404;
     next("Error Occured");
 });
 
+//function for any other path for post request i.e Error handler
+app.post('*', function(request, response, next) {
 
-//Error handling Middleware
+    response.status = 404;
+    next("Error Occured");
+});
 
+//Error handling Middleware 
+//application level middleware
 app.use(function(err, req, res, next) {
-    
+
     console.log("Error handler used");
     //console.error(err.stack);
-    
+
     if (res.status == 404) {
-        res.send("Enter Correct Path");
+        res.send("Check your Path , Please refer Documentation for API Info");
     } else {
         res.send(err);
-    }  
+    }
 });
 
 
 
 app.listen(3000, function() {
-    console.log('Example app listening on port 3000!');
+    console.log('Blog app listening on port 3000!');
 });
